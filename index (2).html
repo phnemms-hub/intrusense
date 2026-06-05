@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InstruSense — Hear Every Instrument</title>
+
+  <!-- Google Fonts: Cormorant Garamond (elegant display) + DM Sans (clean body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ════════════════════════════════════════════════════
+       DESIGN SYSTEM — Change colors here to restyle the whole app
+       ════════════════════════════════════════════════════ */
+    :root {
+      --ink:        #1c1917;      /* near-black — main text */
+      --paper:      #faf7f2;      /* warm off-white — page background */
+      --cream:      #f0ebe0;      /* slightly darker cream — card bg */
+      --cream2:     #e8e0d0;      /* darker cream — borders, dividers */
+      --gold:       #b07d3a;      /* warm gold — main accent */
+      --gold-light: #d4a55a;      /* lighter gold — hover states */
+      --gold-dim:   rgba(176,125,58,0.10); /* translucent gold — subtle fills */
+      --green:      #3a7c5a;      /* muted forest green — success/play */
+      --red:        #9c3a3a;      /* muted red — errors */
+      --muted:      #7c7068;      /* medium brown-grey — secondary text */
+      --shadow:     rgba(28,25,23,0.12);
+
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body:    'DM Sans', system-ui, sans-serif;
+
+      --radius:    14px;
+      --radius-sm: 8px;
+      --radius-xs: 5px;
+    }
+
+    /* ── RESET & BASE ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── DECORATIVE BACKGROUND LINES ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 79px,
+          rgba(176,125,58,0.06) 79px,
+          rgba(176,125,58,0.06) 80px
+        );
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 20px 100px;
+    }
+
+    /* ════════════════════════════════════════════════════
+       HEADER
+       ════════════════════════════════════════════════════ */
+    header {
+      padding: 56px 0 44px;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Top decorative rule */
+    .rule-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .rule-top::before,
+    .rule-top::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--cream2));
+    }
+    .rule-top::after {
+      background: linear-gradient(to left, transparent, var(--cream2));
+    }
+    .rule-dot {
+      width: 6px; height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: breathe 3s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.4; transform:scale(0.6); }
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 9vw, 80px);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--gold);
+    }
+
+    .tagline {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: clamp(16px, 3vw, 20px);
+      color: var(--muted);
+      margin-top: 12px;
+      font-weight: 400;
+    }
+
+    /* Decorative ornament */
+    .ornament {
+      display: block;
+      margin: 28px auto 0;
+      font-size: 22px;
+      color: var(--gold);
+      letter-spacing: 8px;
+      opacity: 0.7;
+    }
+
+    /* ════════════════════════════════════════════════════
+       UPLOAD SECTION
+       ════════════════════════════════════════════════════ */
+    .upload-section {
+      margin: 36px 0;
+    }
+
+    /* Section label */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--cream2);
+    }
+
+    /* ── TWO BIG CHOICE BUTTONS ── */
+    .source-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .source-btn {
+      background: var(--cream);
+      border: 1.5px solid var(--cream2);
+      border-radius: var(--radius);
+      padding: 28px 16px 24px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s;
+      font-family: var(--font-body);
+      color: var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+    .source-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(176,125,58,0.07), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .source-btn:hover {
+      border-color: var(--gold);
+      background: #f5f0e6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px var(--shadow);
+    }
+    .source-btn:hover::after { opacity: 1; }
+    .source-btn:active { transform: translateY(0); }
+
+    .source-icon {
+      font-size: 38px;
+      line-height: 1;
+      margin-bottom: 12px;
+      display: block;
+      filter: drop-shadow(0 2px 4px var(--shadow));
+    }
+    .source-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .source-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Hidden file inputs */
+    #file-input, #camera-input { display: none; }
+
+    /* ── DRAG & DROP ZONE ── */
+    .dropzone {
+      border: 1.5px dashed var(--cream2);
+      border-radius: var(--radius);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: transparent;
+      position: relative;
+    }
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+    }
+    .dropzone input {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .dropzone-text {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 17px;
+      color: var(--muted);
+    }
+    .dropzone-sub {
+      font-size: 12px;
+      color: var(--cream2);
+      margin-top: 6px;
+    }
+    .file-badges {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .badge {
+      background: var(--cream);
+      border: 1px solid var(--cream2);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* ── IMAGE PREVIEW ── */
+    #preview-wrap {
+      display: none;
+      margin: 16px 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1.5px solid var(--cream2);
+      position: relative;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+    #preview-img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      display: block;
+    }
+    .preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(28,25,23,0.4) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .preview-label {
+      position: absolute;
+      bottom: 14px;
+      left: 16px;
+      font-size: 12px;
+      color: rgba(250,247,242,0.9);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+    }
+    .preview-change {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(28,25,23,0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(250,247,242,0.15);
+      color: rgba(250,247,242,0.9);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: background 0.2s;
+    }
+    .preview-change:hover { background: rgba(28,25,23,0.85); }
+
+    /* ── IDENTIFY BUTTON ── */
+    .btn-identify {
+      display: none;
+      width: 100%;
+      padding: 19px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-style: italic;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      letter-spacing: 0.01em;
+      margin-top: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-identify::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0;
+      background: var(--gold);
+      transition: width 0.3s ease;
+      z-index: 0;
+    }
+    .btn-identify:hover::before { width: 100%; }
+    .btn-identify span { position: relative; z-index: 1; }
+    .btn-identify:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(28,25,23,0.18);
+    }
+    .btn-identify:active { transform: translateY(0); }
+    .btn-identify:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── ERROR BOX ── */
+    #error-box {
+      display: none;
+      background: rgba(156,58,58,0.07);
+      border: 1px solid rgba(156,58,58,0.2);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      color: var(--red);
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    /* ════════════════════════════════════════════════════
+       LOADING STATE
+       ════════════════════════════════════════════════════ */
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 64px 0;
+    }
+
+    .vinyl {
+      width: 72px; height: 72px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, var(--ink) 18%, transparent 18%),
+        repeating-conic-gradient(var(--ink) 0deg, #3d3530 3deg, var(--ink) 6deg);
+      animation: spin 1.8s linear infinite;
+      position: relative;
+    }
+    .vinyl::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 14px; height: 14px;
+      background: var(--gold);
+      border-radius: 50%;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 22px;
+      color: var(--muted);
+    }
+    .loading-sub {
+      font-size: 13px;
+      color: var(--cream2);
+      margin-top: 6px;
+    }
+
+    /* ════════════════════════════════════════════════════
+       RESULT SECTION
+       ════════════════════════════════════════════════════ */
+    #result {
+      display: none;
+      margin-top: 48px;
+      animation: riseUp 0.6s cubic-bezier(0.22,1,0.36,1);
+    }
+    @keyframes riseUp {
+      from { opacity:0; transform:translateY(28px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── RESULT HERO ── */
+    .result-hero {
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .result-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .result-name {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 8vw, 68px);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .result-family {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: clamp(18px, 3.5vw, 24px);
+      color: var(--gold);
+      margin-top: 6px;
+      font-weight: 400;
+    }
+
+    /* Confidence pill */
+    .conf-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--cream);
+      border: 1px solid var(--cream2);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+    .conf-dot { width:7px; height:7px; border-radius:50%; }
+    .conf-high  .conf-dot { background: #3a7c5a; }
+    .conf-medium .conf-dot { background: #b07d3a; }
+    .conf-low   .conf-dot { background: #9c3a3a; }
+
+    /* ── INFO STRIP ── */
+    .info-strip {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .info-tile {
+      background: var(--cream);
+      border: 1px solid var(--cream2);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .info-tile .t-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .info-tile .t-value {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    /* ── CONTENT CARDS ── */
+    .card {
+      background: var(--cream);
+      border: 1px solid var(--cream2);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 10px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--gold);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .card-icon {
+      width: 36px; height: 36px;
+      background: var(--paper);
+      border: 1px solid var(--cream2);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .card p, .card li {
+      font-size: 14px;
+      color: #4a4540;
+      line-height: 1.75;
+    }
+    .card ul { padding-left: 18px; }
+    .card li { margin-bottom: 6px; }
+
+    /* ── SOUND PLAYER CARD ── */
+    .player-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--paper);
+      border: 1px solid var(--cream2);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+    }
+
+    .play-btn {
+      width: 52px; height: 52px;
+      min-width: 52px;
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .play-btn:hover { background: var(--gold); transform: scale(1.06); }
+    .play-btn.playing { background: var(--green); }
+
+    .player-info { flex: 1; min-width: 0; }
+    .player-name {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .player-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .progress-bar {
+      height: 3px;
+      background: var(--cream2);
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--gold);
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+
+    /* ── HOW TO PLAY STEPS ── */
+    .steps-list {
+      list-style: none;
+      padding: 0;
+    }
+    .steps-list li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--cream2);
+    }
+    .steps-list li:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px; height: 28px;
+      min-width: 28px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .step-text { font-size: 14px; color: #4a4540; line-height: 1.65; }
+
+    /* ── CHIPS ── */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      background: var(--paper);
+      border: 1.5px solid var(--cream2);
+      border-radius: 100px;
+      padding: 5px 16px;
+      font-size: 13px;
+      font-family: var(--font-display);
+      font-style: italic;
+      color: var(--ink);
+      cursor: default;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .chip:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: var(--gold-dim);
+    }
+
+    /* ── RESET BUTTON ── */
+    .btn-reset {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 40px auto 0;
+      background: transparent;
+      border: 1.5px solid var(--cream2);
+      color: var(--muted);
+      padding: 12px 28px;
+      border-radius: 100px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-reset:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: var(--gold-dim);
+    }
+
+    /* ════════════════════════════════════════════════════
+       FOOTER
+       ════════════════════════════════════════════════════ */
+    footer {
+      margin-top: 80px;
+      padding: 24px 0;
+      border-top: 1px solid var(--cream2);
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .footer-logo em { color: var(--gold); font-style: italic; }
+    .footer-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ════════════════════════════════════════════════════
+       RESPONSIVE (MOBILE)
+       ════════════════════════════════════════════════════ */
+    @media (max-width: 480px) {
+      header { padding: 36px 0 28px; }
+      .source-grid { gap: 10px; }
+      .source-btn { padding: 22px 12px 18px; }
+      .source-icon { font-size: 30px; }
+      .source-title { font-size: 17px; }
+      .info-strip { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- ════════════════════════════════════
+       HEADER
+       ════════════════════════════════════ -->
+  <header>
+    <div class="rule-top">
+      <div class="rule-dot"></div>
+    </div>
+
+    <span class="eyebrow">AI Instrument Identifier</span>
+
+    <h1>Instru<em>Sense</em></h1>
+
+    <p class="tagline">Point. Shoot. Discover the music within.</p>
+
+    <span class="ornament">✦ &nbsp; ✦ &nbsp; ✦</span>
+  </header>
+
+  <!-- ════════════════════════════════════
+       UPLOAD SECTION
+       ════════════════════════════════════ -->
+  <section class="upload-section">
+
+    <!-- Hidden file inputs (no visible UI — the buttons below trigger these) -->
+    <input type="file"   id="file-input"   accept="image/*" />
+    <input type="file"   id="camera-input" accept="image/*" capture="environment" />
+
+    <p class="section-label">Choose how to add your photo</p>
+
+    <!-- Two big choice buttons -->
+    <div class="source-grid">
+
+      <button class="source-btn" id="btn-gallery">
+        <span class="source-icon">🖼️</span>
+        <span class="source-title">Gallery</span>
+        <span class="source-sub">Pick an existing photo</span>
+      </button>
+
+      <button class="source-btn" id="btn-camera">
+        <span class="source-icon">📷</span>
+        <span class="source-title">Camera</span>
+        <span class="source-sub">Take a live photo</span>
+      </button>
+
+    </div>
+
+    <!-- Drag & drop zone (great for desktop) -->
+    <div class="dropzone" id="dropzone">
+      <!-- This hidden input inside the dropzone lets desktop users drag files onto it -->
+      <input type="file" id="drop-input" accept="image/*" />
+      <p class="dropzone-text">or drag & drop a photo here</p>
+      <p class="dropzone-sub">Desktop only</p>
+      <div class="file-badges">
+        <span class="badge">JPG</span>
+        <span class="badge">PNG</span>
+        <span class="badge">WEBP</span>
+        <span class="badge">Any instrument</span>
+      </div>
+    </div>
+
+    <!-- Preview of the uploaded image -->
+    <div id="preview-wrap">
+      <img id="preview-img" alt="Your uploaded instrument" />
+      <div class="preview-overlay"></div>
+      <span class="preview-label">✓ Ready to identify</span>
+      <button class="preview-change" id="btn-change">Change photo</button>
+    </div>
+
+    <!-- The main action button -->
+    <button class="btn-identify" id="btn-identify">
+      <span>✦ &nbsp; Identify This Instrument</span>
+    </button>
+
+    <!-- Error message box -->
+    <div id="error-box"></div>
+
+  </section>
+
+  <!-- ════════════════════════════════════
+       LOADING STATE
+       ════════════════════════════════════ -->
+  <div id="loading">
+    <div class="vinyl"></div>
+    <p class="loading-text">Reading the instrument…</p>
+    <p class="loading-sub">Asking the AI — this takes a few seconds</p>
+  </div>
+
+  <!-- ════════════════════════════════════
+       RESULT SECTION
+       (hidden until AI responds)
+       ════════════════════════════════════ -->
+  <div id="result">
+
+    <!-- Instrument name & family -->
+    <div class="result-hero">
+      <p class="result-eyebrow">Instrument identified</p>
+      <div class="result-name" id="r-name">—</div>
+      <div class="result-family" id="r-family">—</div>
+      <div class="conf-pill" id="r-conf-pill">
+        <span class="conf-dot"></span>
+        <span id="r-conf-text">—</span>
+      </div>
+    </div>
+
+    <!-- Quick info grid (origin / era / family / genres) -->
+    <div class="info-strip">
+      <div class="info-tile">
+        <div class="t-label">Origin</div>
+        <div class="t-value" id="r-origin">—</div>
+      </div>
+      <div class="info-tile">
+        <div class="t-label">Era</div>
+        <div class="t-value" id="r-era">—</div>
+      </div>
+      <div class="info-tile">
+        <div class="t-label">Family</div>
+        <div class="t-value" id="r-family2">—</div>
+      </div>
+      <div class="info-tile">
+        <div class="t-label">Genres</div>
+        <div class="t-value" id="r-genres">—</div>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📖</div>
+        <div class="card-title">About this Instrument</div>
+      </div>
+      <p id="r-about">—</p>
+    </div>
+
+    <!-- Sound sample -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎵</div>
+        <div class="card-title">Sound Sample</div>
+      </div>
+      <div class="player-wrap">
+        <button class="play-btn" id="play-btn" title="Play sound">▶</button>
+        <div class="player-info">
+          <div class="player-name" id="r-sound-name">—</div>
+          <div class="player-desc" id="r-sound-desc">Synthesized preview — no internet needed</div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to play -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">How to Play — Beginner Tips</div>
+      </div>
+      <ol class="steps-list" id="r-steps"></ol>
+    </div>
+
+    <!-- Fun facts -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Fun Facts</div>
+      </div>
+      <ul id="r-facts"></ul>
+    </div>
+
+    <!-- Famous artists -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🌟</div>
+        <div class="card-title">Famous Players</div>
+      </div>
+      <div class="chips" id="r-artists"></div>
+    </div>
+
+    <!-- Related instruments -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🎼</div>
+        <div class="card-title">Related Instruments</div>
+      </div>
+      <div class="chips" id="r-related"></div>
+    </div>
+
+    <!-- Reset -->
+    <button class="btn-reset" id="btn-reset">↩ &nbsp; Identify another instrument</button>
+
+  </div><!-- end #result -->
+
+</div><!-- end .page -->
+
+<!-- ════════════════════════════════════
+     FOOTER
+     ════════════════════════════════════ -->
+<footer>
+  <div class="page">
+    <div class="footer-logo">Instru<em>Sense</em></div>
+    <p class="footer-sub">Powered by Google Gemini AI &nbsp;·&nbsp; Sound by Web Audio API</p>
+  </div>
+</footer>
+
+
+<!-- ════════════════════════════════════════════════════════
+     JAVASCRIPT
+     All the logic that makes this page interactive.
+     Read the comments — every step is explained!
+     ════════════════════════════════════════════════════════ -->
+<script>
+
+  // ══════════════════════════════════════════════════
+  //  STEP 1 — Get references to every HTML element
+  //  we need to control from JavaScript.
+  //  document.getElementById('some-id') finds the element
+  //  with id="some-id" in the HTML above.
+  // ══════════════════════════════════════════════════
+  const fileInput   = document.getElementById('file-input');
+  const cameraInput = document.getElementById('camera-input');
+  const dropInput   = document.getElementById('drop-input');
+  const btnGallery  = document.getElementById('btn-gallery');
+  const btnCamera   = document.getElementById('btn-camera');
+  const dropzone    = document.getElementById('dropzone');
+  const previewWrap = document.getElementById('preview-wrap');
+  const previewImg  = document.getElementById('preview-img');
+  const btnChange   = document.getElementById('btn-change');
+  const btnIdentify = document.getElementById('btn-identify');
+  const loading     = document.getElementById('loading');
+  const errorBox    = document.getElementById('error-box');
+  const result      = document.getElementById('result');
+  const playBtn     = document.getElementById('play-btn');
+  const progressFill= document.getElementById('progress-fill');
+  const btnReset    = document.getElementById('btn-reset');
+
+  // ══════════════════════════════════════════════════
+  //  STEP 2 — Declare global variables.
+  //  These hold data that multiple functions need to share.
+  // ══════════════════════════════════════════════════
+  let imageBase64   = null;  // The image file converted to a text string
+  let imageMimeType = null;  // The image type, e.g. "image/jpeg"
+  let currentData   = null;  // The last result from the AI
+  let audioCtx      = null;  // The browser's sound engine
+  let isPlaying     = false; // Is sound currently playing?
+  let progressTimer = null;  // Timer for the progress bar animation
+
+  // ══════════════════════════════════════════════════
+  //  STEP 3 — Wire up the buttons.
+  //  When Gallery button is clicked → open file picker.
+  //  When Camera button is clicked → open phone camera.
+  //  When Change button is clicked → open file picker again.
+  // ══════════════════════════════════════════════════
+  btnGallery.addEventListener('click', () => fileInput.click());
+  btnCamera.addEventListener('click',  () => cameraInput.click());
+  btnChange.addEventListener('click',  () => fileInput.click());
+
+  // When a file is picked from gallery or drag input
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+  // When a photo is taken with camera
+  cameraInput.addEventListener('change', () => {
+    if (cameraInput.files[0]) handleFile(cameraInput.files[0]);
+  });
+  // When a file is chosen via the drag-zone's hidden input
+  dropInput.addEventListener('change', () => {
+    if (dropInput.files[0]) handleFile(dropInput.files[0]);
+  });
+
+  // ── Drag and drop events ──
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault(); // Stop browser default behavior (opening the file)
+    dropzone.classList.add('dragover');
+  });
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover');
+  });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0]; // Get the dropped file
+    if (file && file.type.startsWith('image/')) handleFile(file);
+  });
+
+  // ══════════════════════════════════════════════════
+  //  STEP 4 — handleFile()
+  //  Called when any image is chosen (gallery, camera, or drag).
+  //  Converts the image to base64 and shows the preview.
+  // ══════════════════════════════════════════════════
+  function handleFile(file) {
+    imageMimeType = file.type || 'image/jpeg';
+
+    // FileReader is a built-in browser tool that reads files
+    const reader = new FileReader();
+
+    // This function runs when the reader finishes reading
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      // dataUrl looks like: "data:image/jpeg;base64,/9j/4AAQ..."
+      // We only need the part after the comma (the actual base64 data)
+      imageBase64 = dataUrl.split(',')[1];
+
+      // Show the image preview
+      previewImg.src = dataUrl;
+      previewWrap.style.display = 'block';
+      btnIdentify.style.display = 'block';
+
+      // Hide old results and errors
+      result.style.display = 'none';
+      errorBox.style.display = 'none';
+
+      // Reset sound player
+      stopSound();
+    };
+
+    // Start reading the file as a base64 data URL
+    reader.readAsDataURL(file);
+  }
+
+  // ══════════════════════════════════════════════════
+  //  STEP 5 — analyzeInstrument()
+  //  Called when the user clicks "Identify".
+  //  Sends the image to our server, which sends it to the AI.
+  // ══════════════════════════════════════════════════
+  btnIdentify.addEventListener('click', analyzeInstrument);
+
+  async function analyzeInstrument() {
+    if (!imageBase64) return;
+
+    // Show loading spinner, hide old result
+    loading.style.display = 'block';
+    btnIdentify.disabled = true;
+    result.style.display = 'none';
+    errorBox.style.display = 'none';
+
+    try {
+      // Send the image to our local server at /analyze
+      // The server forwards it to the AI and sends back the result
+      const response = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64, imageMimeType })
+        // JSON.stringify() converts a JavaScript object into a JSON text string
+      });
+
+      const data = await response.json();
+
+      // Check if the server returned an error
+      if (!response.ok) {
+        throw new Error(data.error || 'Server error. Is server.js running?');
+      }
+
+      // Extract the text from the response
+      const text = data.content.map(b => b.text || '').join('');
+
+      // The text is a JSON string — parse it into a JavaScript object
+      let parsed;
+      try {
+        const clean = text.replace(/```json|```/g, '').trim();
+        parsed = JSON.parse(clean);
+      } catch {
+        throw new Error('Could not read AI response. Please try again.');
+      }
+
+      if (parsed.error) throw new Error(parsed.error);
+
+      // All good — store the result and display it
+      currentData = parsed;
+      displayResult(parsed);
+
+    } catch (err) {
+      // Show the error message in the red error box
+      errorBox.textContent = '⚠  ' + (err.message || 'Something went wrong.');
+      errorBox.style.display = 'block';
+    } finally {
+      // Always hide the spinner and re-enable the button
+      loading.style.display = 'none';
+      btnIdentify.disabled = false;
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  //  STEP 6 — displayResult()
+  //  Fills in all the result fields with data from the AI.
+  //  'data' is a JavaScript object with all the instrument info.
+  // ══════════════════════════════════════════════════
+  function displayResult(data) {
+
+    // Fill in the instrument name and family
+    document.getElementById('r-name').textContent    = data.name    || 'Unknown';
+    document.getElementById('r-family').textContent  = data.family  || '';
+    document.getElementById('r-family2').textContent = data.family  || '—';
+    document.getElementById('r-origin').textContent  = data.origin  || '—';
+    document.getElementById('r-era').textContent     = data.era     || '—';
+    document.getElementById('r-genres').textContent  = data.genres  || '—';
+    document.getElementById('r-about').textContent   = data.about   || '—';
+    document.getElementById('r-sound-name').textContent = data.name + ' sound preview';
+    document.getElementById('r-sound-desc').textContent = data.sound_description || 'Synthesized preview';
+
+    // Confidence pill — colour changes based on High/Medium/Low
+    const pill = document.getElementById('r-conf-pill');
+    pill.className = 'conf-pill conf-' + (data.confidence || 'low').toLowerCase();
+    document.getElementById('r-conf-text').textContent = data.confidence + ' confidence';
+
+    // How to Play — build a list item for each step
+    const stepsList = document.getElementById('r-steps');
+    stepsList.innerHTML = '';
+    (data.play_steps || []).forEach((step, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<div class="step-num">${i + 1}</div><span class="step-text">${step}</span>`;
+      stepsList.appendChild(li);
+    });
+
+    // Fun Facts — build a list item for each fact
+    const factsList = document.getElementById('r-facts');
+    factsList.innerHTML = '';
+    (data.fun_facts || []).forEach(fact => {
+      const li = document.createElement('li');
+      li.textContent = fact;
+      factsList.appendChild(li);
+    });
+
+    // Famous Artists — build a chip for each name
+    const artistsDiv = document.getElementById('r-artists');
+    artistsDiv.innerHTML = '';
+    (data.famous_players || []).forEach(name => {
+      const span = document.createElement('span');
+      span.className = 'chip';
+      span.textContent = name;
+      artistsDiv.appendChild(span);
+    });
+
+    // Related Instruments — build a chip for each instrument
+    const relatedDiv = document.getElementById('r-related');
+    relatedDiv.innerHTML = '';
+    (data.related_instruments || []).forEach(inst => {
+      const span = document.createElement('span');
+      span.className = 'chip';
+      span.textContent = inst;
+      relatedDiv.appendChild(span);
+    });
+
+    // Show the entire result section and scroll to it
+    result.style.display = 'block';
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ══════════════════════════════════════════════════
+  //  STEP 7 — Sound synthesis using Web Audio API
+  //
+  //  Web Audio API is built into every modern browser.
+  //  No AI, no internet, no downloads needed.
+  //  It generates sound mathematically using oscillators
+  //  (math functions that produce sound waves).
+  // ══════════════════════════════════════════════════
+  playBtn.addEventListener('click', () => {
+    if (!currentData) return;
+    if (isPlaying) { stopSound(); return; }
+    playSound(currentData.sound_type || 'default');
+  });
+
+  function stopSound() {
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+    isPlaying = false;
+    playBtn.textContent = '▶';
+    playBtn.classList.remove('playing');
+    progressFill.style.width = '0%';
+  }
+
+  function playSound(type) {
+    isPlaying = true;
+    playBtn.textContent = '⏹';
+    playBtn.classList.add('playing');
+
+    // Create the audio context — this is the browser's sound engine
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Master volume control — all sounds route through this
+    const master = audioCtx.createGain();
+    master.gain.value = 0.55;
+    master.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    const duration = 5; // seconds
+
+    // ── Different sound recipes for different instrument types ──
+    type = type.toLowerCase();
+
+    if (type === 'string') {
+      // String sound: multiple harmonics with a pluck-like attack and decay
+      // Harmonics are multiples of a base frequency (like how a guitar string vibrates)
+      [196, 392, 588, 784].forEach((freq, i) => {
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(master);
+        osc.type = 'sawtooth'; // Sawtooth wave is rich and bright
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3 / (i + 1), now); // Each harmonic is quieter
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.start(now); osc.stop(now + duration);
+      });
+
+    } else if (type === 'wind' || type === 'woodwind') {
+      // Wind sound: smooth sine wave with vibrato (slight pitch wobble)
+      const osc    = audioCtx.createOscillator();
+      const vibLfo = audioCtx.createOscillator(); // LFO = Low Frequency Oscillator (the wobble)
+      const vibAmt = audioCtx.createGain();
+      const gain   = audioCtx.createGain();
+      osc.connect(gain); gain.connect(master);
+      vibLfo.connect(vibAmt); vibAmt.connect(osc.frequency); // LFO modulates pitch
+      osc.type = 'sine'; osc.frequency.value = 349;
+      vibLfo.type = 'sine'; vibLfo.frequency.value = 5.5; vibAmt.gain.value = 7;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.45, now + 0.25); // Slow attack (breath)
+      gain.gain.linearRampToValueAtTime(0.4, now + duration - 0.4);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.start(now); osc.stop(now + duration);
+      vibLfo.start(now); vibLfo.stop(now + duration);
+
+    } else if (type === 'brass') {
+      // Brass sound: buzzy sawtooth filtered to sound like a horn
+      const osc    = audioCtx.createOscillator();
+      const filter = audioCtx.createBiquadFilter();
+      const gain   = audioCtx.createGain();
+      osc.connect(filter); filter.connect(gain); gain.connect(master);
+      osc.type = 'sawtooth'; osc.frequency.value = 220;
+      filter.type = 'bandpass'; filter.frequency.value = 1500; filter.Q.value = 3;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.6, now + 0.08); // Fast attack (like blowing)
+      gain.gain.linearRampToValueAtTime(0.5, now + duration - 0.3);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.start(now); osc.stop(now + duration);
+
+    } else if (type === 'percussion') {
+      // Percussion: noise burst + low thud — no pitch, just rhythm
+      // White noise is all frequencies at once (like static)
+      const buf    = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.6, audioCtx.sampleRate);
+      const data   = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.06));
+      }
+      const src    = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const gain   = audioCtx.createGain();
+      src.buffer = buf;
+      filter.type = 'lowpass'; filter.frequency.value = 300;
+      src.connect(filter); filter.connect(gain); gain.connect(master);
+      gain.gain.setValueAtTime(1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+      src.start(now);
+
+    } else if (type === 'electronic') {
+      // Electronic: pulsing square wave with LFO — classic synth sound
+      const osc  = audioCtx.createOscillator();
+      const lfo  = audioCtx.createOscillator();
+      const lAmt = audioCtx.createGain();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(master);
+      lfo.connect(lAmt); lAmt.connect(osc.frequency);
+      osc.type = 'square'; osc.frequency.value = 220;
+      lfo.type = 'sine'; lfo.frequency.value = 4; lAmt.gain.value = 40;
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + duration - 0.5);
+      gain.gain.linearRampToValueAtTime(0, now + duration);
+      osc.start(now); osc.stop(now + duration);
+      lfo.start(now); lfo.stop(now + duration);
+
+    } else {
+      // Default / Keyboard: gentle chord (three notes together = a chord)
+      [261.63, 329.63, 392.00].forEach((freq, i) => { // C, E, G = C major chord
+        const osc  = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(master);
+        osc.type = 'triangle'; // Soft, mellow wave
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.2, now + 0.05 + i * 0.06); // Strum effect
+        gain.gain.linearRampToValueAtTime(0.15, now + duration - 0.5);
+        gain.gain.linearRampToValueAtTime(0, now + duration);
+        osc.start(now + i * 0.05); osc.stop(now + duration);
+      });
+    }
+
+    // Animate the progress bar while sound plays
+    const startTime = Date.now();
+    progressTimer = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      progressFill.style.width = Math.min((elapsed / duration) * 100, 100) + '%';
+      if (elapsed >= duration) stopSound();
+    }, 80);
+  }
+
+  // ══════════════════════════════════════════════════
+  //  STEP 8 — Reset
+  //  Clears everything so the user can start over.
+  // ══════════════════════════════════════════════════
+  btnReset.addEventListener('click', () => {
+    stopSound();
+
+    // Clear all stored data
+    imageBase64   = null;
+    imageMimeType = null;
+    currentData   = null;
+
+    // Reset all file inputs (so the same file can be chosen again)
+    fileInput.value   = '';
+    cameraInput.value = '';
+    dropInput.value   = '';
+
+    // Hide UI panels
+    previewWrap.style.display  = 'none';
+    btnIdentify.style.display  = 'none';
+    result.style.display       = 'none';
+    errorBox.style.display     = 'none';
+
+    // Scroll back to the top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+</script>
+</body>
+</html>
